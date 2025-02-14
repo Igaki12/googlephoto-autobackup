@@ -9,7 +9,7 @@ fi
 
 DEST_DIR="$1"
 
-# 指定されたパスが存在していて、ディレクトリでない場合はエラー
+# 指定されたパスが存在していて、ディレクトリでなければエラー
 if [ -e "$DEST_DIR" ] && [ ! -d "$DEST_DIR" ]; then
     echo "エラー: '$DEST_DIR' は既に存在していますが、ディレクトリではありません。"
     exit 1
@@ -17,6 +17,9 @@ fi
 
 # 統合先ディレクトリが存在しなければ作成
 mkdir -p "$DEST_DIR"
+
+# json_files フォルダも作成（存在しなければ）
+mkdir -p "$DEST_DIR/json_files"
 
 echo "統合先ディレクトリ: $DEST_DIR"
 echo "--------------------------------"
@@ -40,18 +43,19 @@ for takeout in Takeout*; do
                 base=$(basename "$photo_dir")  # 例: "Photos from 2023"
                 mkdir -p "$DEST_DIR/$base"
 
-                echo "  → '$base' の中身を '$DEST_DIR/$base/' へ移動します。（.json ファイルは除外）"
-                # ファイルやサブディレクトリを移動（.json ファイルは除外）
+                echo "  → '$base' の中身を '$DEST_DIR/$base/' へ移動します。"
+                # 各アイテムごとに処理 (.json ファイルは json_files フォルダへ)
                 for item in "$photo_dir"/*; do
-                    # 存在しない場合（空ディレクトリ）をチェック
+                    # 存在しない場合（空ディレクトリ）はスキップ
                     if [ ! -e "$item" ]; then
                         continue
                     fi
                     if [[ "$item" == *.json ]]; then
-                      #  echo "    スキップ: $(basename "$item") (json file)"
-                        continue
+                        # echo "    → JSON ファイル '$(basename "$item")' を '$DEST_DIR/json_files/' に移動します。"
+                        mv "$item" "$DEST_DIR/json_files/" 2>/dev/null || true
+                    else
+                        mv "$item" "$DEST_DIR/$base/" 2>/dev/null || true
                     fi
-                    mv "$item" "$DEST_DIR/$base/" 2>/dev/null || true
                 done
 
                 # 移動後、空になったディレクトリは削除
