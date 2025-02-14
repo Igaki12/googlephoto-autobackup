@@ -40,9 +40,19 @@ for takeout in Takeout*; do
                 base=$(basename "$photo_dir")  # 例: "Photos from 2023"
                 mkdir -p "$DEST_DIR/$base"
 
-                echo "  → '$base' の中身を '$DEST_DIR/$base/' へ移動します。"
-                # ファイルやサブディレクトリを移動（エラーは無視）
-                mv "$photo_dir"/* "$DEST_DIR/$base/" 2>/dev/null || true
+                echo "  → '$base' の中身を '$DEST_DIR/$base/' へ移動します。（.json ファイルは除外）"
+                # ファイルやサブディレクトリを移動（.json ファイルは除外）
+                for item in "$photo_dir"/*; do
+                    # 存在しない場合（空ディレクトリ）をチェック
+                    if [ ! -e "$item" ]; then
+                        continue
+                    fi
+                    if [[ "$item" == *.json ]]; then
+                      #  echo "    スキップ: $(basename "$item") (json file)"
+                        continue
+                    fi
+                    mv "$item" "$DEST_DIR/$base/" 2>/dev/null || true
+                done
 
                 # 移動後、空になったディレクトリは削除
                 rmdir "$photo_dir" 2>/dev/null || true
